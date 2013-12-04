@@ -20,6 +20,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
@@ -179,7 +180,10 @@ public class ReIndexAction extends BaseRestHandler {
             try {
                 IndexRequest indexReq = Requests.indexRequest(indexName).type(newType).id(hit.id()).source(hit.source());
                 if (withVersion)
-                    indexReq.version(hit.version());
+                    // withVersion will fail if the document doesn't already exist.
+                    // Setting VersionType to EXTERNAL allows the new document to be added
+                    // TODO: have this as an optional argument
+                    indexReq.version(hit.version()).versionType(VersionType.EXTERNAL);
 
                 brb.add(indexReq);
             } catch (Exception ex) {
